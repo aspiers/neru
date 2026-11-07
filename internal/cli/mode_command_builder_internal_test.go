@@ -146,6 +146,13 @@ func TestReadModeCommand_SendsWhatWasTyped(t *testing.T) {
 			wantAction: domain.ModeNameRecursiveGrid,
 			wantArgs:   []string{"--zoom-to-depth=2"},
 		},
+		{
+			name:       "no-subgrid travels as written",
+			config:     ModeConfig{Mode: domain.ModeGrid},
+			argv:       []string{"--no-subgrid"},
+			wantAction: domain.ModeNameGrid,
+			wantArgs:   []string{"--no-subgrid"},
+		},
 	}
 
 	for _, testCase := range tests {

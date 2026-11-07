@@ -530,3 +530,100 @@ func TestManager_PrefixValidationRegression(t *testing.T) {
 		}
 	}
 }
+
+func TestManager_HandleInput_SubgridEnabled(t *testing.T) {
+	logger := logger.Get()
+
+	tests := []struct {
+		name           string
+		subgridEnabled bool
+		wantComplete   bool
+		wantSubgrids   int
+	}{
+		{
+			name:           "label opens the subgrid",
+			subgridEnabled: true,
+			wantComplete:   false,
+			wantSubgrids:   1,
+		},
+		{
+			name:           "label completes at the cell center",
+			subgridEnabled: false,
+			wantComplete:   true,
+			wantSubgrids:   0,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testGrid := grid.NewGrid("ABCD", image.Rect(0, 0, 400, 400), logger)
+			cell := testGrid.Cells()[len(testGrid.Cells())/2]
+			label := cell.Coordinate()
+
+			subgrids := 0
+			manager := grid.NewManager(
+				testGrid,
+				domain.GridDimensions{Rows: 3, Cols: 3},
+				"123456789",
+				nil,
+				func(*grid.Cell) { subgrids++ },
+				logger,
+			)
+			manager.SetSubgridEnabled(test.subgridEnabled)
+
+			var (
+				point    image.Point
+				complete bool
+			)
+
+			for _, key := range label {
+				point, complete = manager.HandleInput(string(key))
+			}
+
+			if complete != test.wantComplete {
+				t.Fatalf(
+					"complete = %v after label %q, want %v",
+					complete,
+					label,
+					test.wantComplete,
+				)
+			}
+
+			if subgrids != test.wantSubgrids {
+				t.Errorf("subgrids opened = %d, want %d", subgrids, test.wantSubgrids)
+			}
+
+			if test.wantComplete && point != cell.Center() {
+				t.Errorf("point = %v, want cell center %v", point, cell.Center())
+			}
+
+			if _, open := manager.SubgridCell(); open != test.subgridEnabled {
+				t.Errorf("subgrid open = %v, want %v", open, test.subgridEnabled)
+			}
+
+			if test.subgridEnabled {
+				return
+			}
+
+			// Backspace edits the completed label, and retyping its last key
+			// completes it again.
+			manager.HandleBackspace()
+
+			if got, want := manager.CurrentInput(), label[:len(label)-1]; got != want {
+				t.Fatalf("input after backspace = %q, want %q", got, want)
+			}
+
+			point, complete = manager.HandleInput(label[len(label)-1:])
+			if !complete || point != cell.Center() {
+				t.Errorf("retyped label: point = %v, complete = %v; want %v, true",
+					point, complete, cell.Center())
+			}
+
+			manager.Reset()
+
+			if got := manager.CurrentInput(); got != "" {
+				t.Errorf("input after reset = %q, want empty", got)
+			}
+		})
+	}
+}

@@ -68,6 +68,10 @@ type Activation struct {
 	// ZoomToDepth auto-zooms recursive grid to a depth.
 	ZoomToDepth *int
 
+	// NoSubgrid makes a grid label select its cell's center instead of opening
+	// the subgrid in it.
+	NoSubgrid *bool
+
 	// FilterRoles keeps only the elements with these accessibility roles.
 	FilterRoles []string
 

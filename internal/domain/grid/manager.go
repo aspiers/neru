@@ -20,6 +20,9 @@ type Manager struct {
 	onShowSub     func(cell *Cell)
 	inSubgrid     bool
 	selectedCell  *Cell
+	// subgridEnabled is false when a complete label should finish the
+	// selection at the cell's center instead of opening the subgrid.
+	subgridEnabled bool
 	// Subgrid configuration
 	subDims domain.GridDimensions
 	subKeys string
@@ -56,6 +59,8 @@ func NewManager(
 		onShowSub:   onShowSub,
 		subDims:     subDims,
 		subKeys:     string(SubgridKeys(subKeys, subDims.CellCount())),
+
+		subgridEnabled: true,
 	}
 }
 
@@ -156,6 +161,12 @@ func (m *Manager) UpdateGrid(g *Grid) {
 // keys the user can see.
 func (m *Manager) UpdateSubKeys(subKeys string) {
 	m.subKeys = string(SubgridKeys(subKeys, m.subDims.CellCount()))
+}
+
+// SetSubgridEnabled says whether a complete main-grid label opens the subgrid
+// (true, the default) or completes the selection at the cell's center (false).
+func (m *Manager) SetSubgridEnabled(enabled bool) {
+	m.subgridEnabled = enabled
 }
 
 // HandleBackspace applies grid backspace behavior. It deletes one input character,
@@ -284,6 +295,16 @@ func (m *Manager) handleLabelLengthReached() (image.Point, bool) {
 		m.Reset()
 
 		return image.Point{}, false
+	}
+
+	if !m.subgridEnabled {
+		// The label stays typed, so the overlay highlights the chosen cell and
+		// Backspace or reset edit it as they would any other input.
+		if m.onUpdate != nil {
+			m.onUpdate(false)
+		}
+
+		return cell.Center(), true
 	}
 
 	m.inSubgrid = true

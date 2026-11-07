@@ -154,6 +154,19 @@ func TestActivateMode_HandsTheWholeActivationToTheMode(t *testing.T) {
 			},
 		},
 		{
+			name: "grid, the one mode with a subgrid",
+			want: modecmd.Activation{
+				Mode:                  domain.ModeGrid,
+				Action:                &act,
+				Modifier:              &modifier,
+				OnExit:                []string{stepExecFoo},
+				Repeat:                &given,
+				Toggle:                &given,
+				CursorFollowSelection: &holdCursor,
+				NoSubgrid:             &given,
+			},
+		},
+		{
 			name: "recursive grid, the one mode that zooms",
 			want: modecmd.Activation{
 				Mode:                  domain.ModeRecursiveGrid,

@@ -485,6 +485,12 @@ Takes a value. Modes: `recursive_grid`.
 
 Open recursive grid already zoomed to this depth at the cursor.
 
+#### `--no-subgrid`
+
+Takes no value. Modes: `grid`.
+
+Select the center of the labeled cell instead of opening the 3x3 subgrid in it.
+
 #### `--cursor-selection-mode`
 
 Takes a value. Modes: `hints` · `grid` · `recursive_grid` · `bisect`.
@@ -559,7 +565,8 @@ neru grid [flags]
 ```
 
 Overlay a grid of labeled cells over the screen, or the focused window with
-`--capture-scope window`. Typing a label opens a 3x3 subgrid in that cell.
+`--capture-scope window`. Typing a label opens a 3x3 subgrid in that cell, or
+with `--no-subgrid` selects the cell's center.
 [`move_cell`](#neru-action-move_cell) moves the open subgrid to a neighbouring
 cell. Takes the `grid` flags in the [mode flag reference](#mode-flag-reference).
 Size, labels and appearance are under [`[grid]`](configuration.md#grid).

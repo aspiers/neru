@@ -129,6 +129,19 @@ type Context struct {
 	baseContext
 
 	gridInstance **domainGrid.Grid
+	noSubgrid    bool
+}
+
+// SetNoSubgrid sets whether a label selects its cell's center instead of
+// opening the subgrid, so a repeat keeps what the activation asked for.
+func (c *Context) SetNoSubgrid(noSubgrid bool) {
+	c.noSubgrid = noSubgrid
+}
+
+// NoSubgrid returns whether a label selects its cell's center instead of
+// opening the subgrid.
+func (c *Context) NoSubgrid() bool {
+	return c.noSubgrid
 }
 
 // SetGridInstance sets the grid instance.
@@ -149,5 +162,6 @@ func (c *Context) GridInstance() **domainGrid.Grid {
 // Reset resets the grid context to its initial state.
 func (c *Context) Reset() {
 	c.gridInstance = nil
+	c.noSubgrid = false
 	c.baseContext.Reset()
 }

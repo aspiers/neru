@@ -16,12 +16,14 @@ This is useful for reaching UI elements that hints mode cannot detect
 (e.g., custom-rendered canvases, graphics, or embedded web views).
 
 Use --action to set a pending action once the grid target is selected.
+Use --no-subgrid to select a cell's center as soon as its label is typed.
 
 Examples:
   neru grid                           Activate grid mode (navigate to a point)
   neru grid --action left_click       Navigate and then left-click
   neru grid --action right_click      Navigate and then right-click
-  neru grid --action left_click --repeat  Click multiple spots in sequence`,
+  neru grid --action left_click --repeat  Click multiple spots in sequence
+  neru grid --no-subgrid --action left_click  Click a cell's center, no subgrid`,
 })
 
 func init() {

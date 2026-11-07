@@ -206,6 +206,12 @@ func flagCases() map[modecmd.Flag]flagCase {
 			applied: func(a modecmd.Activation) bool { return a.ZoomToDepth != nil },
 			build:   func(a *modecmd.Activation) { a.ZoomToDepth = new(3) },
 		},
+		modecmd.FlagNoSubgrid: {
+			mode:    domain.ModeGrid,
+			args:    []string{"--no-subgrid"},
+			applied: func(a modecmd.Activation) bool { return a.NoSubgrid != nil && *a.NoSubgrid },
+			build:   func(a *modecmd.Activation) { a.NoSubgrid = new(true) },
+		},
 		modecmd.FlagCursorSelectionMode: {
 			mode:    domain.ModeGrid,
 			args:    []string{"--cursor-selection-mode=hold"},

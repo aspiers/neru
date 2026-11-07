@@ -70,6 +70,10 @@ const (
 	// FlagZoomToDepth auto-zooms recursive grid to a depth.
 	FlagZoomToDepth Flag = "zoom-to-depth"
 
+	// FlagNoSubgrid makes a grid label select its cell's center instead of
+	// opening the subgrid in it.
+	FlagNoSubgrid Flag = "no-subgrid"
+
 	// FlagCursorSelectionMode chooses how the real cursor behaves during
 	// selection.
 	FlagCursorSelectionMode Flag = "cursor-selection-mode"
@@ -131,6 +135,7 @@ const (
 	usageSplitWord           = "Hint each word of detected text separately. Needs the vision strategy"
 	usageTargets             = "Label these targets instead of scanning, as JSON in the shape 'neru query hints --json' prints. Refuses the flags that decide what a scan collects, and --repeat"
 	usageZoomToDepth         = "Open recursive grid already zoomed to this depth at the cursor"
+	usageNoSubgrid           = "Select the center of the labeled cell instead of opening the 3x3 subgrid in it"
 )
 
 // usageCycle is what a comma-separated list means on the flags that cycle.
@@ -399,6 +404,9 @@ var (
 	// recursiveGridOnly is the one flag about zooming.
 	recursiveGridOnly = []domain.Mode{domain.ModeRecursiveGrid}
 
+	// gridOnly is the one flag about the subgrid.
+	gridOnly = []domain.Mode{domain.ModeGrid}
+
 	// modes is every mode a mode command can name: the ones a user enters, and
 	// idle, which is how they leave.
 	modes = append(slices.Clone(enterableModes), domain.ModeIdle)
@@ -623,6 +631,12 @@ var descriptors = []Descriptor{
 			}
 
 			return []string{FlagZoomToDepth.Assign(strconv.Itoa(*activation.ZoomToDepth))}
+		},
+	),
+	presenceFlag(FlagNoSubgrid, "", usageNoSubgrid, gridOnly,
+		func(activation *Activation) { activation.NoSubgrid = enabled() },
+		func(activation Activation) []string {
+			return renderPresence(FlagNoSubgrid, activation.NoSubgrid)
 		},
 	),
 	valueFlag(FlagCursorSelectionMode, "", usageCursorSelectionMode, msgCursorSelectionModeValue,

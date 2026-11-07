@@ -238,6 +238,117 @@ func TestSimulation_GridJourney(t *testing.T) {
 	}
 }
 
+// TestSimulation_GridWithoutSubgridSelectsTheCellCenter covers --no-subgrid.
+// The full label is the whole selection, so the cursor lands on the cell's
+// center, no subgrid opens, and a pending action runs on that keystroke.
+func TestSimulation_GridWithoutSubgridSelectsTheCellCenter(t *testing.T) {
+	tests := []struct {
+		name      string
+		binding   string
+		wantClick bool
+		wantMode  domain.Mode
+	}{
+		{name: "no action stays in grid", binding: "grid --no-subgrid", wantMode: domain.ModeGrid},
+		{
+			name:      "action clicks and exits",
+			binding:   "grid --no-subgrid --action left_click",
+			wantClick: true,
+			wantMode:  domain.ModeIdle,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := simConfig()
+			cfg.Hotkeys.Bindings[gridHotkey] = []string{test.binding}
+
+			sim := newSimHarness(t, cfg, nil)
+
+			sim.pressHotkey(gridHotkey)
+			sim.waitMode(domain.ModeGrid)
+			sim.waitFor("grid drawn", func() bool { return sim.overlay.lastGrid() != nil })
+
+			cells := sim.overlay.lastGrid().Cells()
+			if len(cells) == 0 {
+				t.Fatal("grid drawn with zero cells")
+			}
+
+			cell := cells[len(cells)/2]
+
+			movesBefore := sim.cursor.moveCount()
+			sim.typeLabel(cell.Coordinate())
+
+			sim.waitFor("cursor moved to the cell center", func() bool {
+				return sim.cursor.moveCount() > movesBefore &&
+					sim.cursor.position() == cell.Center()
+			})
+
+			if test.wantClick {
+				sim.waitFor(
+					"click recorded",
+					func() bool { return len(sim.ax.recordedClicks()) > 0 },
+				)
+
+				if clicks := sim.ax.recordedClicks(); clicks[0].point != cell.Center() {
+					t.Errorf(
+						"click landed at %v, want cell center %v",
+						clicks[0].point,
+						cell.Center(),
+					)
+				}
+			} else if clicks := sim.ax.recordedClicks(); len(clicks) != 0 {
+				t.Errorf("clicks = %v, want none without an action", clicks)
+			}
+
+			sim.waitMode(test.wantMode)
+
+			if got := sim.overlay.subgridCount(); got != 0 {
+				t.Errorf("subgrids opened = %d, want 0 with --no-subgrid", got)
+			}
+		})
+	}
+}
+
+// TestSimulation_GridRepeatKeepsNoSubgrid pins that --repeat reopens grid with
+// --no-subgrid still in force, so the second label clicks as the first did.
+func TestSimulation_GridRepeatKeepsNoSubgrid(t *testing.T) {
+	cfg := simConfig()
+	cfg.Hotkeys.Bindings[gridHotkey] = []string{"grid --no-subgrid --action left_click --repeat"}
+
+	sim := newSimHarness(t, cfg, nil)
+
+	sim.pressHotkey(gridHotkey)
+	sim.waitMode(domain.ModeGrid)
+	sim.waitFor("grid drawn", func() bool { return sim.overlay.lastGrid() != nil })
+
+	cell := sim.overlay.lastGrid().Cells()[0]
+
+	drawsBefore := sim.overlay.gridDrawCount()
+	sim.typeLabel(cell.Coordinate())
+
+	sim.waitFor("first click recorded", func() bool { return len(sim.ax.recordedClicks()) == 1 })
+	sim.waitFor("grid re-armed after repeat click", func() bool {
+		return sim.app.CurrentMode() == domain.ModeGrid &&
+			sim.overlay.gridDrawCount() > drawsBefore
+	})
+
+	sim.typeLabel(cell.Coordinate())
+	sim.waitFor("second click recorded", func() bool { return len(sim.ax.recordedClicks()) == 2 })
+
+	for _, click := range sim.ax.recordedClicks() {
+		if click.point != cell.Center() {
+			t.Errorf("repeat click at %v, want cell center %v", click.point, cell.Center())
+		}
+	}
+
+	if got := sim.overlay.subgridCount(); got != 0 {
+		t.Errorf("subgrids opened = %d, want 0 with --no-subgrid", got)
+	}
+
+	sim.press("Escape")
+	sim.waitMode(domain.ModeIdle)
+}
+
 // TestSimulation_GridNarrowingCostsNoRedraw is the promise ADR 0003 makes a
 // user. Typing in grid mode narrows what is on screen without redrawing the
 // grid or putting the overlay up again. It asserts the domain value the user's

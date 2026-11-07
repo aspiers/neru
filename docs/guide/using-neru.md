@@ -99,6 +99,8 @@ labels to read.
 4. Press `Shift+L` to click.
 
 Grid suits coarse jumps across large monitors. `Space` starts over.
+`neru grid --no-subgrid` skips step 3, and the label alone moves the cursor
+to the cell's center.
 
 ## Scroll
 
